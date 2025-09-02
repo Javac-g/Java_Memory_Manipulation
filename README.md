@@ -142,6 +142,86 @@ A comprehensive repository README capturing byte-level manipulation in Java and 
 
 ---
 
+# General Number System Representations
+
+| System        | Base | Digits Used                     | Example for 42 | Notes                                  |
+|---------------|------|---------------------------------|----------------|----------------------------------------|
+| Binary        | 2    | 0, 1                           | `101010`       | Machine-level, bitwise ops, flags      |
+| Octal         | 8    | 0–7                            | `52`           | Old UNIX file perms, compact grouping  |
+| Decimal       | 10   | 0–9                            | `42`           | Human default numbering                |
+| Hexadecimal   | 16   | 0–9, A–F                       | `2A`           | Compact binary representation, colors  |
+| Base32        | 32   | A–Z, 2–7                       | `16` → `G`     | Encoding, checksums, identifiers       |
+| Base36        | 36   | 0–9, A–Z                       | `42` → `16`    | Short IDs, URL shorteners              |
+| Base58        | 58   | 1–9, A–H, J–N, P–Z, a–k, m–z   | `42` → `h`     | Bitcoin, avoids look-alike chars       |
+| Base64        | 64   | A–Z, a–z, 0–9, +, /            | `42` → `Kg==`  | Encoding binary as text (e.g., email)  |
+| Roman Numeral | —    | I, V, X, L, C, D, M            | `XLII`         | Historical numbering system            |
+
+# Numeric Systems in Java
+
+| System        | Prefix / Syntax | Example Literal        | Base | Notes                                        |
+|---------------|-----------------|------------------------|------|----------------------------------------------|
+| Decimal       | (none)          | `42`                   | 10   | Default representation of integers           |
+| Binary        | `0b` or `0B`    | `0b101010` (42)        | 2    | Added in Java 7                              |
+| Octal         | Leading `0`     | `052` (42)             | 8    | Leading zero means octal (⚠ deprecated style)|
+| Hexadecimal   | `0x` or `0X`    | `0x2A` (42)            | 16   | Common for bit manipulation                  |
+| Floating-point| Decimal or sci. | `3.14`, `6.02e23`      | 10   | Supports scientific notation (`e`/`E`)       |
+| Underscores   | Between digits  | `1_000_000`            | —    | Improves readability (Java 7+)               |
+
+# General Boolean Algebra Truth Table
+
+| A | B | NOT A | A AND B | A OR B | A XOR B | A NAND B | A NOR B | A XNOR B |
+|---|---|-------|---------|--------|---------|----------|---------|----------|
+| 0 | 0 |   1   |    0    |   0    |    0    |    1     |    1    |    1     |
+| 0 | 1 |   1   |    0    |   1    |    1    |    1     |    0    |    0     |
+| 1 | 0 |   0   |    0    |   1    |    1    |    1     |    0    |    0     |
+| 1 | 1 |   0   |    1    |   1    |    0    |    0     |    0    |    1     |
+
+# Logical Operators in Java
+
+| Operator | Name             | Type        | Example        | Notes                                                      |
+|----------|------------------|-------------|----------------|------------------------------------------------------------|
+| `&&`     | Logical AND      | Short-circuit | `a && b`     | Evaluates `b` only if `a` is true                         |
+| `&`      | Bitwise AND      | Non-short    | `a & b`       | Works on booleans and integers (bitwise)                  |
+| `||`     | Logical OR       | Short-circuit | `a || b`     | Evaluates `b` only if `a` is false                        |
+| `|`      | Bitwise OR       | Non-short    | `a | b`       | Works on booleans and integers (bitwise)                  |
+| `^`      | XOR (exclusive)  | Bitwise/logical | `a ^ b`    | True if operands differ; bitwise on numbers               |
+| `!`      | NOT              | Unary        | `!a`          | Negates boolean                                            |
+| `==`     | Equality         | Comparison   | `a == b`      | Compares boolean values or numbers                        |
+| `!=`     | Inequality       | Comparison   | `a != b`      | Opposite of equality                                      |
+| `~`      | Bitwise NOT      | Unary        | `~x`          | Inverts all bits of an integer                            |
+
+
+# Java Boolean Truth Tables
+
+## AND (`&&` / `&`)
+| A     | B     | A && B |
+|-------|-------|--------|
+| true  | true  | true   |
+| true  | false | false  |
+| false | true  | false  |
+| false | false | false  |
+
+## OR (`||` / `|`)
+| A     | B     | A || B |
+|-------|-------|--------|
+| true  | true  | true   |
+| true  | false | true   |
+| false | true  | true   |
+| false | false | false  |
+
+## XOR (`^`)
+| A     | B     | A ^ B  |
+|-------|-------|--------|
+| true  | true  | false  |
+| true  | false | true   |
+| false | true  | true   |
+| false | false | false  |
+
+## NOT (`!`)
+| A     | !A    |
+|-------|-------|
+| true  | false |
+| false | true  |
 
 ## Bytes in Java
 
@@ -153,6 +233,19 @@ A comprehensive repository README capturing byte-level manipulation in Java and 
 | Examples       | `01001100₂ = 76₁₀`, `11111111₂ = -1₁₀`   |
 
 # Java Byte & JVM Memory — Tools, APIs, and Libraries
+
+# Java Numeric Data Types
+
+| Type   | Size (bits) | Wrapper Class | Min Value                       | Max Value                       | Default Value | Notes                                  |
+|--------|-------------|---------------|---------------------------------|---------------------------------|---------------|----------------------------------------|
+| byte   | 8           | Byte          | -128                            | 127                             | 0             | Signed 2’s complement                   |
+| short  | 16          | Short         | -32,768                         | 32,767                          | 0             | Signed 2’s complement                   |
+| int    | 32          | Integer       | -2,147,483,648 (-2^31)          | 2,147,483,647 (2^31 - 1)        | 0             | Most common integer type                |
+| long   | 64          | Long          | -9,223,372,036,854,775,808      | 9,223,372,036,854,775,807       | 0L            | Use `L` suffix for literals             |
+| float  | 32          | Float         | ~1.4E-45                        | ~3.4E38                         | 0.0f          | IEEE 754 single precision, 6–7 digits   |
+| double | 64          | Double        | ~4.9E-324                       | ~1.8E308                        | 0.0d          | IEEE 754 double precision, 15–16 digits |
+| char   | 16          | Character     | 0                               | 65,535 (unsigned)               | '\u0000'      | UTF-16 code unit, not negative          |
+
 
 ## Core Bitwise & Shifts
 
