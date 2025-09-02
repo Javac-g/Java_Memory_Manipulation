@@ -801,41 +801,17 @@ jstack $PID > /tmp/threads.txt
 # Start JFR for 2 minutes and dump
 jcmd $PID JFR.start name=diag settings=profile filename=/tmp/run.jfr duration=2m
 
-15) Gotchas & best practices
-
-Always label environments: prod vs local (flags/overhead).
-
-Prefer JFR/async-profiler for low-overhead, accurate signals.
-
-Don’t trust “shallow size” when chasing leaks — use retained size in MAT.
-
-Turn on NMT early if native leaks are suspected; it can’t retroactively help.
-
-Keep symbols (HotSpot hsdis optional) if you dig into assembly; not required for most work.
-
-Automate: build small scripts to capture JFR, histograms, thread dumps on incident.
 
 
 
+# Advanced Low-Level APIs
 
+| API                          | Purpose                                                         |
+|-------------------------------|-----------------------------------------------------------------|
+| VarHandle                     | Safe, fine-grained, ordered/atomic access to array elements and fields |
+| Foreign Memory (Panama; JDK 22+) | Off-heap segments, explicit layouts, and endianness             |
+| sun.misc.Unsafe               | Raw memory ops; non-portable; last resort                        |
 
-
-
-
-
-
-
-
-
-
-
-
-
-Advanced Low-Level APIs
-API	Purpose
-VarHandle	Safe, fine-grained, ordered/atomic access to array elements and fields
-Foreign Memory (Panama; JDK 22+)	Off-heap segments, explicit layouts, and endianness
-sun.misc.Unsafe	Raw memory ops; non-portable; last resort
 
 Panama example:
 ```
@@ -851,16 +827,19 @@ try (Arena arena = Arena.ofConfined()) {
   int v = seg.get(I32LE, 4);
 }
 ```
-Third-Party Power Tools
-Purpose	Libraries / Tools
-High-perf byte containers	: Netty ByteBuf, Agrona DirectBuffer, Chronicle Bytes
-Binary serialization	Protocol Buffers, FlatBuffers, Cap’n Proto, Avro, Kryo, Protostuff
-Compact binary JSON-likes	MessagePack, CBOR, BSON
-Binary parsing DSLs	Kaitai Struct, JBBP
-Bitmaps / compressed sets	RoaringBitmap, JavaEWAH
-Compression	LZ4, Zstd, Snappy, Brotli, GZIP/Deflate
-Cryptography	BouncyCastle
-Native interop	JNI (manual), JNA/JNR-FFI (simpler)
+# Third-Party Power Tools
+
+| Purpose                   | Libraries / Tools                                                            |
+|----------------------------|------------------------------------------------------------------------------|
+| High-perf byte containers  | Netty ByteBuf, Agrona DirectBuffer, Chronicle Bytes                          |
+| Binary serialization       | Protocol Buffers, FlatBuffers, Cap’n Proto, Avro, Kryo, Protostuff           |
+| Compact binary JSON-likes  | MessagePack, CBOR, BSON                                                      |
+| Binary parsing DSLs        | Kaitai Struct, JBBP                                                          |
+| Bitmaps / compressed sets  | RoaringBitmap, JavaEWAH                                                      |
+| Compression                | LZ4, Zstd, Snappy, Brotli, GZIP/Deflate                                      |
+| Cryptography               | BouncyCastle                                                                 |
+| Native interop             | JNI (manual), JNA/JNR-FFI (simpler)                                          |
+
 
 Netty example:
 ```
@@ -927,163 +906,151 @@ int mix(int x, int y) {
   return x ^ y;
 }
 ```
-Decision Guide
+# JVM Memory & Byte Manipulation Decision Guide
+
+## Decision Guide
 
-Simple pack/unpack: ByteBuffer + masks/shifts.
+| Scenario | Recommended Approach |
+|----------|-----------------------|
+| Simple pack/unpack | `ByteBuffer` + masks/shifts |
+| Huge files / in-place patching | `MappedByteBuffer` |
+| High-throughput I/O and pooling | Netty `ByteBuf` |
+| Low-latency fixed schemas | SBE (Simple Binary Encoding), Agrona |
+| Cross-language APIs | Protobuf / FlatBuffers / Cap’n Proto |
+| Reverse-engineering unknown binary formats | Kaitai Struct, JBBP |
+| Off-heap with explicit layout, no JNI | Project Panama |
+| Max control / hacks | Unsafe (avoid unless necessary) |
 
-Huge files / in-place patching: MappedByteBuffer.
+---
 
-High-throughput I/O and pooling: Netty ByteBuf.
+## Pitfalls & Pro Tips
 
-Low-latency fixed schemas: SBE (Simple Binary Encoding), Agrona.
+- Always mask when converting byte → int: `b & 0xFF`.
+- Be explicit about endianness.
+- Prefer slices/views over copies (`ByteBuffer.slice()`, `ByteBuf.slice()`).
+- For concurrency, use `VarHandle` acquire/release/opaque modes appropriately.
+- Benchmark with JMH; intuition is unreliable.
+- Avoid home-rolled crypto; use JCA/BouncyCastle.
 
-Cross-language APIs: Protobuf / FlatBuffers / Cap’n Proto.
+---
 
-Reverse-engineering unknown binary formats: Kaitai Struct or JBBP.
+## Heap & Stack Inspection
 
-Off-heap with explicit layout, no JNI: Panama.
+### From Inside Your Code
 
-Max control / hacks: Unsafe (avoid unless necessary).
+| Area | APIs / Libraries |
+|------|------------------|
+| Heap size | `Runtime.getRuntime().{free,total,max}Memory()` |
+| MXBeans (JMX) | `MemoryMXBean`, `MemoryPoolMXBean`, `GarbageCollectorMXBean`, `BufferPoolMXBean`, `ThreadMXBean` |
+| Stacks | `Thread.getAllStackTraces()`, `Thread.dumpStack()`, `StackWalker` |
+| Object size/layout | `Instrumentation#getObjectSize`, JOL (layout), Jamm (retained) |
+| Off-heap experiments | Panama (Foreign Memory API) |
+| Low-level access | VarHandle, Unsafe (discouraged) |
 
-Pitfalls & Pro Tips
+### Built-in JDK Tools (CLI)
 
-Always mask when converting byte → int: b & 0xFF.
+| Tool | Purpose / Examples |
+|------|---------------------|
+| `jcmd` | `GC.heap_info`, `GC.class_histogram`, `GC.heap_dump`, `Thread.print`, `VM.native_memory`, `JFR.start` |
+| `jmap` | Heap summary, histograms, dumps (`jmap -histo <pid>`, `jmap -dump:live,file=heap.hprof <pid>`) |
+| `jstack` | All thread stacks: `jstack <pid>` |
+| `jstat` | GC/class loader stats over time |
+| `jinfo` | View JVM flags at runtime |
+| `jhsdb` | Serviceability Agent frontends (clhsdb, jmap, jstack) |
+| `jconsole` / VisualVM | Lightweight GUI monitors |
+| `jfr` | Manage Flight Recorder files |
 
-Be explicit about endianness.
+**GC logging (JDK 9+):**
+- -Xlog:gc*,safepoint,class+unload=info:file=gc.log:tags,uptime,level
+- -XX:NativeMemoryTracking=summary
+**jcmd <pid> VM.native_memory summary**
+  - -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heap.hprof
 
-Prefer slices/views over copies (ByteBuffer.slice(), ByteBuf.slice()).
 
-For concurrency, use VarHandle acquire/release/opaque modes appropriately.
+---
 
-Benchmark with JMH; intuition is unreliable.
+## Profilers & Analyzers
 
-Avoid home-rolled crypto; use JCA/BouncyCastle.
+- **Free/Open Source:** VisualVM, JFR + JMC, Eclipse MAT, GCViewer  
+- **Commercial:** YourKit, JProfiler  
+- **Container/JFR orchestration:** Cryostat (ContainerJFR)
 
-Heap & Stack Inspection
-From Inside Your Code
-Area	APIs / Libraries
-Heap size	Runtime.getRuntime().{free,total,max}Memory()
-MXBeans (JMX)	MemoryMXBean, MemoryPoolMXBean, GarbageCollectorMXBean, BufferPoolMXBean, ThreadMXBean
-Stacks	Thread.getAllStackTraces(), Thread.dumpStack(), StackWalker
-Object size/layout	java.lang.instrument.Instrumentation#getObjectSize (shallow), JOL (layout), Jamm (retained)
-Off-heap experiments	Panama (Foreign Memory API)
-Low-level access	VarHandle; Unsafe (discouraged)
-Built-in JDK Tools (CLI)
-Tool	Purpose / Examples
-jcmd	GC.heap_info, GC.class_histogram, GC.heap_dump, Thread.print, VM.native_memory (with NMT), `JFR.start
-jmap	Heap summary, histograms, dumps: jmap -histo <pid>, jmap -dump:live,file=heap.hprof <pid>
-jstack	All thread stacks: jstack <pid>
-jstat	GC/class loader stats over time
-jinfo	View JVM flags at runtime
-jhsdb	Serviceability Agent frontends: deep live/post-mortem (clhsdb, jmap, jstack)
-jconsole / VisualVM launcher	Lightweight GUI monitors
-jfr	Manage Flight Recorder files
+### Low-Overhead / Native Profilers
+- async-profiler (CPU, allocations, locks, wall-clock; flame graphs; JFR output)  
+- Honest Profiler (older)  
+- Linux perf + perf-map-agent  
+- FlameGraph (post-processing)  
 
-GC logging (JDK 9+):
+### Heap Dump & GC Log Analyzers
+- Eclipse MAT (desktop): dominator tree, leak suspects  
+- HeapHero, GCeasy, yCrash, fastThread (web analyzers)  
+- HPJMeter / IBM PMAT (legacy enterprise GC tooling)  
 
--Xlog:gc*,safepoint,class+unload=info:file=gc.log:tags,uptime,level
+---
 
+## Deep Agents & Bytecode Tools
 
-Enable Native Memory Tracking (NMT):
+- `java.lang.instrument` agents  
+- Byte Buddy (high-level instrumentation)  
+- ASM (low-level bytecode)  
+- BTrace (dynamic tracing)  
+- Byteman (rule-based injection)  
+- JFR Event Streaming (emit/consume custom events)  
+- HPROF (deprecated; avoid for new work)  
 
--XX:NativeMemoryTracking=summary
-# then:
-jcmd <pid> VM.native_memory summary
+---
 
+## Object Sizing & Layout Libraries
 
-Automatic heap dump on OOM:
+- JOL (Java Object Layout)  
+- Jamm (agent; retained sizes)  
+- Carrotsearch SizeOf / Lucene’s `RamUsageEstimator`  
 
--XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heap.hprof
+---
 
-Profilers & Analyzers
+## Native/Off-Heap Diagnostics
 
-Free/Open Source: VisualVM; Java Flight Recorder (JFR) + Java Mission Control (JMC); Eclipse MAT; GCViewer.
+- NMT (Native Memory Tracking)  
+- Direct buffer accounting (`BufferPoolMXBean`)  
+- Panama for controlled off-heap layouts  
+- GDB/lldb + Serviceability Agent for post-mortem native dumps  
 
-Commercial: YourKit, JProfiler.
+---
 
-Container/JFR orchestration: Cryostat (ContainerJFR).
+## GC & Performance Testing Harnesses
 
-Low-Overhead / Native Profilers
+- JMH (Java Microbenchmark Harness) with `-prof gc`  
+- JUnit + JFR (scenario tests with allocation budgets)  
+- Caliper (legacy; prefer JMH)  
 
-async-profiler (CPU, allocations, locks, wall-clock; flame graphs; JFR output).
+---
 
-Honest Profiler (older).
+## Remote Access & Dashboards
 
-Linux perf + perf-map-agent.
+- JMX remote (SSL/RMI) → VisualVM/JMC  
+- Jolokia (JMX over HTTP/JSON)  
+- Micrometer + Prometheus + Grafana (heap, GC, threads, classloading metrics)  
 
-FlameGraph (post-processing).
+---
 
-Heap Dump & GC Log Analyzers
+## Alternative JVMs / Vendor Tools
 
-Eclipse MAT (desktop): dominator tree, leak suspects.
+- **OpenJ9:** jdmpview, IBM MAT integrations  
+- **Azul (Zing/Zulu):** vendor GC diagnostics (C4), JMC integrations  
+- **SAP Machine:** generally HotSpot-compatible  
 
-HeapHero, GCeasy, yCrash, fastThread (web analyzers).
+---
 
-HPJMeter / IBM PMAT (legacy enterprise GC tooling).
+## IDE-Integrated Profilers
 
-Deep Agents & Bytecode Tools
+- IntelliJ Profiler (async-profiler/JFR)  
+- NetBeans Profiler (VisualVM-based)  
+- Eclipse + MAT integration  
 
-java.lang.instrument agents (measure allocations, sizes).
+---
 
-Byte Buddy (high-level instrumentation), ASM (low-level bytecode).
-
-BTrace (dynamic tracing), Byteman (rule-based injection).
-
-JFR Event Streaming (emit/consume custom events).
-
-HPROF (deprecated; avoid for new work).
-
-Object Sizing & Layout Libraries
-
-JOL (Java Object Layout): field offsets, headers, padding, alignment.
-
-Jamm (agent; retained sizes).
-
-Carrotsearch SizeOf / Lucene’s RamUsageEstimator.
-
-Native/Off-Heap Diagnostics
-
-NMT (Native Memory Tracking).
-
-Direct buffer accounting via BufferPoolMXBean.
-
-Panama for controlled off-heap layouts.
-
-GDB/lldb + Serviceability Agent for post-mortem native dumps (advanced).
-
-GC & Performance Testing Harnesses
-
-JMH (Java Microbenchmark Harness), with -prof gc for allocation/GC counts.
-
-JUnit + JFR (scenario tests with allocation budgets).
-
-Caliper (legacy; prefer JMH).
-
-Remote Access & Dashboards
-
-JMX remote (SSL/RMI) to connect VisualVM/JMC.
-
-Jolokia (JMX over HTTP/JSON).
-
-Micrometer + Prometheus + Grafana (heap, GC, threads, classloading metrics).
-
-Alternative JVMs / Vendor Tools
-
-OpenJ9: jdmpview, IBM MAT integrations.
-
-Azul (Zing/Zulu): vendor GC diagnostics (e.g., C4), JMC integrations.
-
-SAP Machine: generally compatible with HotSpot tooling.
-
-IDE-Integrated Profilers
-
-IntelliJ Profiler (wraps async-profiler/JFR; flame graphs, allocations).
-
-NetBeans Profiler (VisualVM-based).
-
-Eclipse + MAT integration.
-
-Starter Command Snippets
+## Starter Command Snippets
+ 
 # Heap histogram (top 50)
 jcmd $PID GC.class_histogram | head -n 60
 
@@ -1103,67 +1070,105 @@ jstack $PID > /tmp/threads.txt
 # Start a JFR for 2 minutes and dump
 jcmd $PID JFR.start name=diag settings=profile filename=/tmp/run.jfr duration=2m
 
-Tools & Libraries Reference Tables
-Bitwise, Shifts, Counts
-Item	Notes
-&, |, ^, ~, <<, >>, >>>	Core operators
-Integer.rotateLeft/Right	Rotations for mixing/crypto-style ops
-Integer.bitCount	Population count
-Integer.numberOfLeadingZeros/TrailingZeros	Bit scans
-Conversions, Checksums, Encodings
-Item	Notes
-HexFormat	Hex encode/decode
-Base64	Standard Base64 encode/decode
-MessageDigest	SHA-256 and others
-CRC32	Fast checksums
-StandardCharsets	Correct text ↔ bytes
-Buffers and I/O
-Item	Notes
-ByteBuffer	Heap/direct buffers; endian control
-MappedByteBuffer	Memory-mapped files; zero-copy patching
-FileChannel	map, random access
-DataInput/OutputStream	Simple binary protocols (big-endian)
-Advanced Memory and Unsafe
-Item	Notes
-VarHandle	Ordered/atomic field/array access
-Panama	Off-heap segments, explicit MemoryLayout
-Unsafe	Raw memory (non-portable; last resort)
-Serialization and Binary Protocols
-Category	Libraries
-Schema-based	Protocol Buffers, Avro, SBE
-Zero-copy reading	FlatBuffers, Cap’n Proto
-General-purpose	Kryo, Protostuff
-Binary JSON-likes	MessagePack, CBOR, BSON
-Byte Containers, Parsing DSLs, Bitsets
-Category	Libraries
-Byte containers	Netty ByteBuf, Agrona, Chronicle
-Parsing DSLs	Kaitai Struct, JBBP
-Bitsets	RoaringBitmap, JavaEWAH
-Compression and Crypto
-Category	Libraries
-Compression	LZ4, Zstd, Snappy, Brotli, GZIP
-Crypto	BouncyCastle
-Profiling, Heap, GC, Thread Tools
-Category	Tools
-JDK CLI	jcmd, jmap, jstack, jstat, jinfo, jhsdb, jfr
-GC Logging	-Xlog:gc* flags
-NMT	`-XX:NativeMemoryTracking=summary
-Free GUIs	VisualVM, JMC (with JFR), Eclipse MAT, GCViewer
-Commercial	YourKit, JProfiler
-Native profilers	async-profiler, Honest Profiler, Linux perf, FlameGraph
-Web analyzers	HeapHero, GCeasy, yCrash, fastThread
-Agents/bytecode	Byte Buddy, ASM, BTrace, Byteman, JFR Event Streaming
-Monitoring	JMX, Jolokia, Micrometer, Prometheus, Grafana
-IDE profilers	IntelliJ Profiler, NetBeans Profiler
-Alternative JVMs	OpenJ9 (jdmpview), Azul/C4 tooling, SAP Machine
-Summary
 
-Byte manipulation: master masks, shifts, rotations, endian handling, and buffer views.
+# Tools & Libraries Reference Tables
 
-Objects ↔ bytes: use serialization or explicit binary layouts; modify only with structural awareness.
+## Bitwise, Shifts, Counts
 
-Advanced control: VarHandle and Panama provide safe low-level primitives; Unsafe is a last resort.
+| Item | Notes |
+|------|-------|
+| `&`, `|`, `^`, `~`, `<<`, `>>`, `>>>` | Core operators |
+| `Integer.rotateLeft/Right` | Rotations for mixing/crypto-style ops |
+| `Integer.bitCount` | Population count |
+| `Integer.numberOfLeadingZeros/TrailingZeros` | Bit scans |
 
-Observability: combine in-process MXBeans/JFR with jcmd/heap dumps and profilers (VisualVM, JMC, async-profiler, MAT).
+---
 
-Ecosystem: choose the right tool—Netty/Agrona/Chronicle for bytes, Protobuf/FlatBuffers/SBE for protocols, Kaitai/JBBP for parsing, RoaringBitmap for sets, LZ4/Zstd for speed, BouncyCastle for crypto.
+## Conversions, Checksums, Encodings
+
+| Item | Notes |
+|------|-------|
+| `HexFormat` | Hex encode/decode |
+| `Base64` | Standard Base64 encode/decode |
+| `MessageDigest` | SHA-256 and others |
+| `CRC32` | Fast checksums |
+| `StandardCharsets` | Correct text ↔ bytes |
+
+---
+
+## Buffers and I/O
+
+| Item | Notes |
+|------|-------|
+| `ByteBuffer` | Heap/direct buffers; endian control |
+| `MappedByteBuffer` | Memory-mapped files; zero-copy patching |
+| `FileChannel` | `map`, random access |
+| `DataInput/OutputStream` | Simple binary protocols (big-endian) |
+
+---
+
+## Advanced Memory and Unsafe
+
+| Item | Notes |
+|------|-------|
+| `VarHandle` | Ordered/atomic field/array access |
+| Panama | Off-heap segments, explicit `MemoryLayout` |
+| `Unsafe` | Raw memory (non-portable; last resort) |
+
+---
+
+## Serialization and Binary Protocols
+
+| Category | Libraries |
+|----------|-----------|
+| Schema-based | Protocol Buffers, Avro, SBE |
+| Zero-copy reading | FlatBuffers, Cap’n Proto |
+| General-purpose | Kryo, Protostuff |
+| Binary JSON-likes | MessagePack, CBOR, BSON |
+
+---
+
+## Byte Containers, Parsing DSLs, Bitsets
+
+| Category | Libraries |
+|----------|-----------|
+| Byte containers | Netty ByteBuf, Agrona, Chronicle |
+| Parsing DSLs | Kaitai Struct, JBBP |
+| Bitsets | RoaringBitmap, JavaEWAH |
+
+---
+
+## Compression and Crypto
+
+| Category | Libraries |
+|----------|-----------|
+| Compression | LZ4, Zstd, Snappy, Brotli, GZIP |
+| Crypto | BouncyCastle |
+
+---
+
+## Profiling, Heap, GC, Thread Tools
+
+| Category | Tools |
+|----------|-------|
+| JDK CLI | `jcmd`, `jmap`, `jstack`, `jstat`, `jinfo`, `jhsdb`, `jfr` |
+| GC Logging | `-Xlog:gc*` flags |
+| NMT | `-XX:NativeMemoryTracking=summary` |
+| Free GUIs | VisualVM, JMC (with JFR), Eclipse MAT, GCViewer |
+| Commercial | YourKit, JProfiler |
+| Native profilers | async-profiler, Honest Profiler, Linux perf, FlameGraph |
+| Web analyzers | HeapHero, GCeasy, yCrash, fastThread |
+| Agents/bytecode | Byte Buddy, ASM, BTrace, Byteman, JFR Event Streaming |
+| Monitoring | JMX, Jolokia, Micrometer, Prometheus, Grafana |
+| IDE profilers | IntelliJ Profiler, NetBeans Profiler |
+| Alternative JVMs | OpenJ9 (`jdmpview`), Azul/C4 tooling, SAP Machine |
+
+---
+
+# Summary
+
+- **Byte manipulation**: master masks, shifts, rotations, endian handling, and buffer views.  
+- **Objects ↔ bytes**: use serialization or explicit binary layouts; modify only with structural awareness.  
+- **Advanced control**: `VarHandle` and Panama provide safe low-level primitives; `Unsafe` is a last resort.  
+- **Observability**: combine in-process MXBeans/JFR with `jcmd`/heap dumps and profilers (VisualVM, JMC, async-profiler, MAT).  
+- **Ecosystem**: choose the right tool — Netty/Agrona/Chronicle for bytes, Protobuf/FlatBuffers/SBE for protocols, Kaitai/JBBP for parsing, RoaringBitmap for sets, LZ4/Zstd for speed, BouncyCastle for crypto.  
