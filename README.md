@@ -2,7 +2,7 @@
 
 <img src = "jvm.png"></img>
 
-<img src = "ser.png"></img>
+<img src = "ser.jpg"></img>
 
 A comprehensive repository README capturing byte-level manipulation in Java and JVM memory inspection—covering fundamentals, practical recipes, advanced APIs, profiling, heap/thread tooling, and third-party ecosystems. No external assumptions; everything documented here comes from the transcript.
 
