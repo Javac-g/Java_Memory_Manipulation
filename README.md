@@ -201,6 +201,7 @@ A comprehensive repository README capturing byte-level manipulation in Java and 
 | false | true  | false  |
 | false | false | false  |
 
+
 ## OR (`||` / `|`)
 | A     | B     | A || B |
 |-------|-------|--------|
@@ -208,6 +209,7 @@ A comprehensive repository README capturing byte-level manipulation in Java and 
 | true  | false | true   |
 | false | true  | true   |
 | false | false | false  |
+
 
 ## XOR (`^`)
 | A     | B     | A ^ B  |
