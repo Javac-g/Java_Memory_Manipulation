@@ -38,6 +38,117 @@ A comprehensive repository README capturing byte-level manipulation in Java and 
 
 ---
 
+# Java Byte & JVM Memory — Tools, APIs, and Libraries
+
+| Category | Item | Description |
+|----------|------|-------------|
+| **Core Bitwise & Shifts** | `&`, `|`, `^`, `~` | Core bitwise operators: AND, OR, XOR, NOT |
+|  | `<<`, `>>`, `>>>` | Left, arithmetic right, logical right shifts |
+|  | `Integer.rotateLeft/rotateRight` | Bit rotations (useful in crypto and mixing) |
+|  | `Integer.bitCount` | Population count (number of 1-bits) |
+|  | `Integer.numberOfLeadingZeros` | Count leading zero bits |
+|  | `Integer.numberOfTrailingZeros` | Count trailing zero bits |
+| **Conversions & Encodings** | `HexFormat` | Hex encode/decode utility (Java 17+) |
+|  | `Base64` | Standard Base64 encode/decode |
+|  | `MessageDigest` | Cryptographic hashes (e.g., SHA-256) |
+|  | `CRC32` | Fast checksum implementation |
+|  | `StandardCharsets` | Correct charset constants for byte ↔ text |
+| **Buffers & I/O** | `ByteBuffer` | Heap/direct buffers; endian-aware control |
+|  | `ByteBuffer.allocateDirect` | Allocate direct (off-heap) buffer |
+|  | `MappedByteBuffer` | Memory-mapped files; zero-copy access |
+|  | `slice()`, `asIntBuffer()` | Create views over buffers without copying |
+|  | `FileChannel` | Random access + memory-mapping |
+|  | `DataInputStream`, `DataOutputStream` | Simple binary protocols (big-endian, UTF) |
+| **Advanced Memory APIs** | `VarHandle` | Low-level, safe ordered/atomic access |
+|  | **Project Panama (Foreign Memory API)** | Off-heap structured memory with explicit `MemoryLayout` (JDK 22+) |
+|  | `sun.misc.Unsafe` | Raw memory operations; non-portable, last resort |
+| **High-Performance Byte Containers** | Netty `ByteBuf` | Reference-counted, pooled, zero-copy slices |
+|  | Agrona `DirectBuffer` | Flyweight views over heap/off-heap memory |
+|  | Chronicle Bytes | Off-heap bytes, memory-mapped files, logs |
+| **Serialization & Protocols** | Protocol Buffers | Schema-based, compact binary format |
+|  | Avro | Schema-based serialization |
+|  | SBE (Simple Binary Encoding) | Low-latency fixed-schema serialization |
+|  | FlatBuffers | Zero-copy serialization (no parsing step) |
+|  | Cap’n Proto | Zero-copy, cross-language serialization |
+|  | Kryo | Fast general-purpose object serialization |
+|  | Protostuff | Alternative to Kryo for fast serialization |
+|  | MessagePack | Compact binary JSON-like format |
+|  | CBOR | Concise Binary Object Representation |
+|  | BSON | Binary JSON (MongoDB format) |
+| **Parsing DSLs** | Kaitai Struct | DSL + codegen for binary format parsing |
+|  | JBBP | Java Bit-Byte Parser (parse bitfields, packed data) |
+| **Bitmaps & Sets** | RoaringBitmap | Compressed bitmaps for large integer sets |
+|  | JavaEWAH | Word-aligned compressed bitmaps |
+| **Compression** | LZ4 | High-speed compression |
+|  | Zstd | Fast modern compression with high ratios |
+|  | Snappy | Google’s fast compression algorithm |
+|  | Brotli | Web-optimized compression |
+|  | GZIP/Deflate | Standard compression algorithms |
+| **Cryptography** | BouncyCastle | Comprehensive crypto library for Java |
+| **Native Interop** | JNI | Manual Java ↔ native binding |
+|  | JNA / JNR-FFI | Easier Java ↔ native interop |
+| **Heap & Object Sizing** | `Runtime.getRuntime()` | Get JVM heap memory sizes |
+|  | `Instrumentation#getObjectSize` | Get shallow object size |
+|  | JOL (Java Object Layout) | Inspect per-field layout, headers, padding |
+|  | Jamm | Agent-based retained size measurement |
+|  | Carrotsearch SizeOf | Retained size estimator (used in Lucene) |
+|  | Lucene’s `RamUsageEstimator` | Utility for object memory usage |
+| **Stack Inspection** | `Thread.getAllStackTraces()` | Inspect all thread stacks |
+|  | `Thread.dumpStack()` | Dump current thread stack |
+|  | `StackWalker` | Fast current-thread stack inspection |
+|  | `ThreadMXBean` | Thread monitoring, CPU time, deadlocks |
+| **In-Process Monitoring APIs** | `MemoryMXBean` | Overall memory pools & GC |
+|  | `MemoryPoolMXBean` | Memory pool usage (eden, survivor, old) |
+|  | `GarbageCollectorMXBean` | GC stats |
+|  | `BufferPoolMXBean` | Direct buffer usage |
+| **JDK CLI Tools** | `jcmd` | Swiss-army knife: GC, heap, threads, JFR |
+|  | `jmap` | Heap summaries, histograms, dumps |
+|  | `jstack` | Thread stack dumps |
+|  | `jstat` | GC/class loader stats over time |
+|  | `jinfo` | JVM flags at runtime |
+|  | `jhsdb` | Serviceability Agent (jmap/jstack replacements) |
+|  | `jconsole` | GUI monitor bundled with JDK |
+|  | VisualVM | GUI profiler & heap/thread analyzer |
+|  | `jfr` | Java Flight Recorder tool |
+| **Profilers (Free)** | Java Flight Recorder (JFR) | Low-overhead profiling & telemetry |
+|  | Java Mission Control (JMC) | GUI to analyze JFR recordings |
+|  | VisualVM | Heap, CPU, thread profiling |
+|  | Eclipse MAT | Heap dump analysis (dominator trees, leaks) |
+|  | GCViewer | GC log analysis |
+| **Profilers (Commercial)** | YourKit | Full CPU/memory profiler |
+|  | JProfiler | Comprehensive commercial profiler |
+|  | AppDynamics / Dynatrace / New Relic / Datadog APM | Production-grade telemetry |
+| **Container Profiling** | Cryostat (ContainerJFR) | Manage JFR on Kubernetes/containers |
+| **Low-Overhead Profilers** | async-profiler | Native sampler: CPU, allocs, locks, flame graphs |
+|  | Honest Profiler | Async sampling profiler |
+|  | Linux `perf` + perf-map-agent | System-level sampling |
+|  | FlameGraph | Visualization of profiler stacks |
+| **Heap/GC Analyzers** | Eclipse MAT | Heap dump analysis |
+|  | HeapHero, GCeasy, yCrash, fastThread | Online GC/heap analysis |
+|  | HPJMeter / IBM PMAT | Legacy enterprise GC analyzers |
+| **Agents & Bytecode Tools** | `java.lang.instrument` | Agent instrumentation API |
+|  | Byte Buddy | High-level runtime instrumentation |
+|  | ASM | Low-level bytecode manipulation |
+|  | BTrace | Dynamic tracing with scripts |
+|  | Byteman | Rule-based bytecode injection |
+|  | JFR Event Streaming | Emit/consume live custom events |
+|  | HPROF | Legacy profiler (deprecated) |
+| **GC & Performance Testing** | JMH (Java Microbenchmark Harness) | Benchmarking with GC profiling |
+|  | JUnit + JFR | Scenario tests with allocation budgets |
+|  | Caliper | Legacy benchmarking framework |
+| **Monitoring & Dashboards** | JMX (remote) | Connect GUIs like JMC/VisualVM |
+|  | Jolokia | JMX over HTTP/JSON |
+|  | Micrometer + Prometheus + Grafana | Metrics dashboards |
+| **Alternative JVMs & Vendor Tools** | OpenJ9 | IBM’s JVM (tools: jdmpview, MAT) |
+|  | Azul Zing/Zulu | C4 GC diagnostics, JMC integrations |
+|  | SAP Machine | HotSpot-compatible distribution |
+| **IDE Profilers** | IntelliJ Profiler | JFR/async-profiler integration |
+|  | NetBeans Profiler | VisualVM-based profiler |
+|  | Eclipse + MAT | Dump analysis integration |
+
+---
+
+
 ## Bytes in Java
 
 | Property       | Details                                   |
@@ -47,11 +158,6 @@ A comprehensive repository README capturing byte-level manipulation in Java and 
 | Representation | Two’s complement                          |
 | Examples       | `01001100₂ = 76₁₀`, `11111111₂ = -1₁₀`   |
 
-Notes:
-- In expressions, `byte` promotes to `int`. Cast back to `byte` if needed.
-- Treat an 8-bit value as “unsigned byte” via masking: `int u = b & 0xFF;`.
-
----
 
 ## Bitwise Operations
 
@@ -62,7 +168,6 @@ Notes:
 | `^`      | XOR   | 1 if bits differ                              | `0b01001100 ^ 0b00001111 = 0b01000011` → `67`       |
 | `~`      | NOT   | flips all bits                                | `~0b01001100 = 0b10110011` (two’s complement `-77`) |
 
----
 
 ## Shift Operators
 
@@ -72,734 +177,6 @@ Notes:
 | `>>`     | Arithmetic right shift  | Shifts right, fills with sign bit (`0` for +, `1` for −)      |
 | `>>>`    | Logical right shift     | Shifts right, fills with `0` (works on `int`/`long`)          |
 
-Examples:
-```java
-byte a = 0b01001100; // 76
-int left  = a << 1;  // 152 (0b10011000)
-int right = a >> 2;  // 19  (0b00010011, sign-extended as int)
-int u3    = (a & 0xFF) >>> 3; // logical right shift on promoted byte
-```
-Practical Applications
-
-Flags and masks: pack booleans/bitfields.
-```
-final int READ=1, WRITE=2, EXEC=4;
-int perms = READ | EXEC;
-boolean canWrite = (perms & WRITE) != 0; // false
-```
-
-Graphics: ARGB extraction.
-```
-int pixel = 0xFF336699;
-int red   = (pixel >> 16) & 0xFF; // 51
-int green = (pixel >> 8)  & 0xFF; // 102
-int blue  =  pixel        & 0xFF; // 153
-```
-
-Networking: parse protocol headers with shifts/masks.
-
-Compression/Encryption: shifting, XOR, and rotations are standard primitives.
-
-Performance: tight loops and data packing.
-
-Objects ↔ Bytes
-
-Yes, objects can be represented as bytes (serialization), modified, and deserialized—if you know the structure.
-
-Java Serialization (example)
-```
-import java.io.*;
-class Person implements Serializable {
-  String name; int age;
-  Person(String n, int a){ name=n; age=a; }
-}
-
-Person p = new Person("Max", 28);
-
-// Serialize
-var bos = new ByteArrayOutputStream();
-try (var out = new ObjectOutputStream(bos)) { out.writeObject(p); }
-byte[] bytes = bos.toByteArray();
-
-// Deserialize
-var bis = new ByteArrayInputStream(bytes);
-try (var in = new ObjectInputStream(bis)) {
-  Person copy = (Person) in.readObject();
-}
-```
-Manual Binary Layout (predictable)
-```
-import java.nio.*;
-ByteBuffer buf = ByteBuffer.allocate(100).order(ByteOrder.LITTLE_ENDIAN);
-buf.putInt(28);
-buf.put("Max".getBytes());
-buf.flip();
-int age = buf.getInt();
-```
-
-Notes:
-
-# Professional Byte Manipulation Notes
-
--   Blindly flipping bits can corrupt structured data (headers/type
-    info).
--   A single byte is small; use `byte[]` for object payloads.
-
-## Professional Byte Manipulation Standard Java Toolbox
-
-### Category: APIs / Methods
-
-#### Bit/shift helpers
-
--   `&`, `|`, `^`, `~`, `<<`, `>>`, `>>>`
--   `Integer.rotateLeft`, `Integer.rotateRight`
-
-#### Counts/zeroes
-
--   `Integer.bitCount`
--   `Integer.numberOfLeadingZeros`
--   `Integer.numberOfTrailingZeros`
-
-#### Endian/byte swap
-
--   `Integer.reverseBytes`
--   `Short.reverseBytes`
--   `Long.reverseBytes`
-
-#### Hex/Base64
-
--   `HexFormat` (Java 17+)
--   `Base64`
-
-#### Hash/Checksum
-
--   `MessageDigest` (e.g., SHA-256)
--   `java.util.zip.CRC32`
-
-#### Charsets
-
--   `StandardCharsets.UTF_8` and friends
-
-#### Buffers
-
--   `ByteBuffer`
--   `ByteBuffer.allocateDirect`
--   `MappedByteBuffer`
--   `slice()`, `asIntBuffer()`
-
-#### Streams
-
--   `DataInputStream`, `DataOutputStream` (big-endian, Java-specific
-    UTF)
-
-#### File I/O
-
--   `FileChannel.open`
--   `map` (memory-mapped files; zero-copy patching)
-
-Examples:
-```
-var hex = java.util.HexFormat.of().withUpperCase();
-String s = hex.formatHex(bytes);
-byte[] raw = hex.parseHex("DEADBEEF");
-
-var md = java.security.MessageDigest.getInstance("SHA-256");
-byte[] digest = md.digest(bytes);
-```
-
-Standard Java toolbox (no deps)
-Bit & byte helpers
-```
-// set/clear/test a bit
-byte setBit(byte x, int i)   { return (byte)(x |   (1 << i)); }
-byte clrBit(byte x, int i)   { return (byte)(x & ~(1 << i)); }
-boolean isSet(byte x, int i) { return (x & (1 << i)) != 0; }
-
-// rotate (works on int/long)
-int rol(int x, int s) { return Integer.rotateLeft(x, s); }
-int ror(int x, int s) { return Integer.rotateRight(x, s); }
-
-// popcount, clz, ctz
-int pc  = Integer.bitCount(v);
-int nlz = Integer.numberOfLeadingZeros(v);
-int ntz = Integer.numberOfTrailingZeros(v);
-
-// endian swap
-int swap = Integer.reverseBytes(v);     // short/long variants also exist
-
-```
-Hex/Base64
-
-```
-var hex = java.util.HexFormat.of().withUpperCase();
-String s = hex.formatHex(bytes);
-byte[] b = hex.parseHex("DEADBEEF");
-
-String b64 = java.util.Base64.getEncoder().encodeToString(bytes);
-byte[] raw = java.util.Base64.getDecoder().decode(b64);
-
-```
-
-Packing/unpacking with ByteBuffer
-```
-ByteBuffer buf = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN);
-buf.putInt(0x11223344).putShort((short)0xABCD);
-buf.flip();
-int v  = buf.getInt();       // 0x11223344 (little-endian)
-int u8 = buf.get() & 0xFF;   // read a byte as unsigned
-
-```
-
-File I/O & zero-copy
-```
-try (var ch = FileChannel.open(path)) {
-  MappedByteBuffer mm = ch.map(FileChannel.MapMode.READ_WRITE, 0, ch.size());
-  int v = mm.getInt(128);
-  mm.put(128, (byte)0x42);      // patch a single byte in-place
-}
-
-```
-Data streams (simple binary protocols)
-```
-try (var out = new DataOutputStream(new ByteArrayOutputStream())) {
-  out.writeInt(42); out.writeUTF("Max");
-}
-try (var in = new DataInputStream(new ByteArrayInputStream(bytes))) {
-  int n = in.readInt(); String s = in.readUTF();
-}
-```
-
-Checksums & hashes
-
-```
-
-var crc = new java.util.zip.CRC32();
-crc.update(bytes); long v = crc.getValue();
-
-var md = java.security.MessageDigest.getInstance("SHA-256");
-byte[] digest = md.digest(bytes);
-
-```
-Charsets (bytes ↔ text)
-```
-byte[] utf8 = "Привіт".getBytes(StandardCharsets.UTF_8);
-String s = new String(utf8, StandardCharsets.UTF_8);
-```
-###Advanced & “close to metal” Java
-VarHandle (safe low-level primitives)
-
-Fine-grained, volatile/atomic access to arrays, buffers, and fields.
-```
-VarHandle VH_BYTE = MethodHandles.arrayElementVarHandle(byte[].class);
-byte x = (byte) VH_BYTE.getAcquire(arr, idx);
-VH_BYTE.setRelease(arr, idx, (byte)123);
-
-```
-Panama Foreign Memory API (JDK 22+)
-
-Off-heap structured memory with layouts; great for “C struct” style binary.
-
-```
-try (var arena = Arena.ofConfined()) {
-  MemorySegment seg = arena.allocate(16);
-  seg.set(ValueLayout.JAVA_INT, 0, 0xDEADBEEF);
-  int v = seg.get(ValueLayout.JAVA_INT, 0);
-}
-
-```
-Define MemoryLayout to pack/unpack complex structs with explicit endianness.
-
-sun.misc.Unsafe (sharp knives)
-
-Raw memory ops: allocate, copy, CAS.
-
-Great power; JVM-dependent & non-portable. Prefer VarHandle/Panama unless you know why not.
-
-
-Third-party power tools
-High-performance byte containers
-
-Netty ByteBuf: reference-counted, pooled, zero-copy slices/composites, endian aware.
-```
-ByteBuf buf = PooledByteBufAllocator.DEFAULT.buffer();
-buf.writeIntLE(0x11223344);
-int v = buf.readUnsignedByte();  // 0..255
-ByteBuf slice = buf.slice(4, 8); // zero-copy view
-
-```
-Agrona DirectBuffer/MutableDirectBuffer: flyweight views over off-heap/heap memory.
-
-Chronicle Bytes: off-heap bytes with random access, memory-mapped files, huge data logs.
-
-Binary serialization / protocols
-
-Protocol Buffers, FlatBuffers, Cap’n Proto, SBE (Simple Binary Encoding), Avro
-
-Protobuf/Avro = schema-based, compact.
-
-FlatBuffers/Cap’n Proto = zero-copy reads (no deserialization step).
-
-SBE (Real-Logic) = finance-grade, low-latency, fixed layouts.
-
-Kryo / Protostuff: fast general-purpose object serialization (not human-readable).
-
-MessagePack / CBOR / BSON: compact binary JSON-likes.
-
-Binary format parsers & DSLs
-
-Kaitai Struct: write a .ksy spec of your binary format → auto-generates a Java parser.
-
-JBBP (Java Bit-Byte Parser): parse bitfields and packed formats (e.g., “read 3 bits, then 13 bits…”).
-
-Bitmaps & compressed bitsets
-
-RoaringBitmap (and JavaEWAH): memory-efficient large sets of integers with fast bit-ops.
-
-Compression / codecs
-
-LZ4, Zstd, Snappy: high-speed compression on byte[]/ByteBuffer.
-
-Brotli, GZIP/Deflate (stdlib) for web pipes.
-
-Crypto
-
-BouncyCastle: rich cryptography primitives and ciphers for byte-level transforms.
-
-Native interop (when bytes meet C)
-
-JNA/JNR-FFI (easy) or JNI (manual) to call native code and hand over byte[]/off-heap memory.
-Practical recipes (copy-paste ready)
-1) Pack structured fields manually (little-endian)
-record Header(int magic, short version, short flags) {
-  byte[] toBytes() {
-    var bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
-    bb.putInt(magic).putShort(version).putShort(flags);
-    return bb.array();
-  }
-  static Header from(byte[] b) {
-    var bb = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN);
-    return new Header(bb.getInt(), bb.getShort(), bb.getShort());
-  }
-}
-
-2) Treat bytes as unsigned
-int b0 = bytes[i]   & 0xFF;
-int b1 = bytes[i+1] & 0xFF;
-int u16 = (b1 << 8) | b0;          // little-endian unsigned 16-bit
-long u32 = ((long)b3 << 24) | ((long)b2 << 16) | ((long)b1 << 8) | b0;
-
-3) Bitfields in an int
-// layout: [unused:8][type:4][flags:4][len:16]
-int pack(int len, int flags, int type) {
-  return ((type & 0xF) << 20) | ((flags & 0xF) << 16) | (len & 0xFFFF);
-}
-int len   = v & 0xFFFF;
-int flags = (v >>> 16) & 0xF;
-int type  = (v >>> 20) & 0xF;
-
-4) Parse/patch a memory-mapped file
-try (var ch = FileChannel.open(path, READ, WRITE)) {
-  var map = ch.map(FileChannel.MapMode.READ_WRITE, 0, ch.size()).order(ByteOrder.BIG_ENDIAN);
-  int header = map.getInt(0);
-  map.put(0, (byte)0x7F);              // patch 1st byte of header
-  map.force();                         // flush to disk
-}
-
-5) Zero-copy slicing with Netty ByteBuf
-ByteBuf all   = Unpooled.wrappedBuffer(bytes);
-ByteBuf head  = all.slice(0, 16);     // view, no copy
-ByteBuf body  = all.slice(16, all.readableBytes()-16);
-int magic = head.readInt();
-
-6) Fast rotate/xor (crypto-style mixing)
-int mix(int x, int y) {
-  x ^= Integer.rotateLeft(y, 13);
-  y ^= Integer.rotateLeft(x, 7);
-  return x ^ y;
-}
-
-7) Panama “struct” with explicit layout (JDK 22+)
-static final ValueLayout.OfInt I32 = ValueLayout.JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN);
-
-try (var arena = Arena.ofConfined()) {
-  MemorySegment seg = arena.allocate(12);
-  seg.set(I32, 0, 0xCAFEBABE);
-  seg.set(I32, 4, 42);
-  seg.set(I32, 8, 7);
-  int v = seg.get(I32, 4);
-}
-
-When to use what (decision guide)
-
-Simple packing/unpacking: ByteBuffer + masks/shifts.
-
-Huge files / patching bytes in place: MappedByteBuffer.
-
-High-throughput I/O, zero-copy, pooling: Netty ByteBuf.
-
-Low-latency fixed schemas (trading, telemetry): SBE, Agrona.
-
-Cross-lang APIs: Protobuf / FlatBuffers / Cap’n Proto.
-
-Binary format reverse-engineering: Kaitai Struct or JBBP.
-
-Off-heap structured memory without JNI: Panama.
-
-Absolute max control / hacks: Unsafe (last resort).
-
-Pitfalls & pro tips
-
-Always mask when converting byte → int: b & 0xFF.
-
-Be explicit about endianness everywhere.
-
-Avoid copying: prefer slices/views (ByteBuffer slice(), Netty slice() / retainedSlice()).
-
-Watch alignment & atomicity if you share memory across threads/devices; use VarHandle/Panama with acquire/release/opaque modes when needed.
-
-Benchmark with JMH; intuitive “fast” code often isn’t.
-
-For security, avoid home-rolled crypto. Use proven libs (BouncyCastle, JCA).
-
-
-Heap inspection (objects in memory)
-
-Runtime API
-
-long free  = Runtime.getRuntime().freeMemory();
-long total = Runtime.getRuntime().totalMemory();
-long max   = Runtime.getRuntime().maxMemory();
-
-
-→ Gives JVM heap usage, not per-object detail.
-
-java.lang.instrument.Instrumentation
-
-Add an agent to your app and call:
-
-long size = instrumentation.getObjectSize(obj);
-
-
-Only gives shallow size. For deep size (all referenced objects), you need third-party libs.
-
-Libraries for object sizing:
-
-JOL (Java Object Layout) — from OpenJDK, inspects how objects are laid out in memory.
-
-System.out.println(ClassLayout.parseInstance(obj).toPrintable());
-
-
-Output: header, field offsets, padding, alignment.
-
-Jamm (Java Agent for Memory Measurements) — measures object graph sizes.
-
-Stack inspection
-
-Thread stacks are not in the heap; each thread gets its own stack (by default ~1MB).
-
-You can inspect them with:
-
-Map<Thread, StackTraceElement[]> all = Thread.getAllStackTraces();
-for (Map.Entry<Thread, StackTraceElement[]> e : all.entrySet()) {
-    System.out.println(e.getKey().getName());
-    for (StackTraceElement ste : e.getValue()) {
-        System.out.println("  " + ste);
-    }
-}
-
-
-For a single thread:
-
-Thread.dumpStack();
-
-
-JVMTI / Debug Attach: deeper introspection (native agent or tools like JFR).
-
-🛠 2. From outside (tools you run on the JVM)
-JVM-native tools
-
-jmap
-
-jmap -heap <pid> → prints heap summary (eden/survivor/old gen).
-
-jmap -histo <pid> → histogram of object counts/sizes by class.
-
-jmap -dump:live,file=heap.bin <pid> → full heap dump file.
-
-jstack
-
-jstack <pid> → dump all thread stacks.
-
-jcmd
-
-General-purpose swiss knife. Examples:
-
-jcmd <pid> GC.heap_info
-
-jcmd <pid> Thread.print
-
-jcmd <pid> GC.class_histogram
-
-jconsole / VisualVM
-
-GUIs bundled with the JDK. Show heap graphs, threads, GC, class histograms.
-
-Modern profilers
-
-VisualVM (ships with JDK, free). Heap dump browsing, thread monitoring, CPU profiler.
-
-Java Mission Control (JMC) + Flight Recorder (JFR) (Oracle/OpenJDK). Low-overhead profiling, heap allocations, GC, threads.
-
-Async Profiler — super fast native sampling profiler.
-
-YourKit / JProfiler (commercial) — heavy-duty heap & thread analyzers.
-
-📦 3. Advanced APIs / Libraries
-
-JOL (Java Object Layout)
-See per-field memory layout.
-
-import org.openjdk.jol.info.ClassLayout;
-System.out.println(ClassLayout.parseClass(MyClass.class).toPrintable());
-
-
-JMH (Java Microbenchmark Harness)
-Measures allocations & GC in tight loops with -prof gc.
-
-Unsafe / VarHandle (not recommended, but possible)
-You can peek into raw memory offsets of objects with sun.misc.Unsafe, but that’s risky.
-
-Panama Foreign Memory API (JDK 22+)
-For off-heap structures, not the managed heap.
-
-1) From inside your Java code (standard APIs)
-Memory & GC
-
-Runtime.getRuntime().{free,total,max}Memory() — coarse heap sizes.
-
-MXBeans (JMX) via ManagementFactory:
-
-MemoryMXBean, MemoryPoolMXBean — heap pools (Eden/Survivor/Old, Metaspace).
-
-GarbageCollectorMXBean — GC counts & times.
-
-BufferPoolMXBean — direct buffer counts/bytes.
-
-ThreadMXBean — thread counts, CPU, deadlocks.
-
-Stack inspection
-
-Thread.getAllStackTraces() / Thread.dumpStack()
-
-ThreadMXBean.dumpAllThreads(...)
-
-StackWalker (Java 9+) — fast, flexible current-thread stack access.
-
-Object size/layout (in-process)
-
-JOL (Java Object Layout) — field offsets, headers, padding, alignment.
-
-java.lang.instrument.Instrumentation — getObjectSize(obj) (shallow).
-
-For deep size: libraries below (Jamm, RamUsageEstimator, etc.).
-
-Panama Foreign Memory API (JDK 22+) — not for heap inspection, but for controlled off-heap structures you define (great for precise memory experiments).
-
-VarHandle — low-level, atomic/ordered access to arrays/fields (useful for building inspectors).
-
-2) Built-in JDK tools (CLI)
-
-jcmd — Swiss-army knife:
-
-GC.heap_info, GC.class_histogram, GC.heap_dump
-
-VM.native_memory summary (if NMT enabled)
-
-Thread.print
-
-JFR.start|dump|stop
-
-jmap — heap summary, histograms, dumps: jmap -histo, -dump:live,file=...
-
-jstack — all thread stacks (blocked/runnable states).
-
-jstat — GC and class loader stats over time.
-
-jinfo — JVM flags at runtime.
-
-jhsdb (Serviceability Agent) — deep post-mortem or live attach:
-
-jhsdb clhsdb, jhsdb jmap, jhsdb jstack (works even when JVM is wedged).
-
-jconsole / VisualVM launcher — simple GUI monitors.
-
-jfr (JDK tool) — manipulate Flight Recorder files.
-
-GC logging (JDK 9+): -Xlog:gc*,safepoint,class+unload=info:file=gc.log:tags,uptime,level → analyze with tools below.
-
-Tips:
-
-Enable NMT (Native Memory Tracking) to inspect native allocations: -XX:NativeMemoryTracking=summary|detail, then jcmd <pid> VM.native_memory.
-
-OOM dumps automatically: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=...
-
-3) GUI profilers & analyzers
-Free / Open Source
-
-Java Flight Recorder (JFR) + Java Mission Control (JMC) — low-overhead, prod-safe allocations, GC, threads, locks, I/O.
-
-VisualVM — heap sampler, CPU profiler, heap dump browser, thread view.
-
-Eclipse MAT (Memory Analyzer Tool) — heap dump deep dive (dominator tree, leak suspects).
-
-GCViewer — chart & analyze GC logs.
-
-Commercial (powerful & polished)
-
-YourKit Java Profiler — CPU, memory, allocations, snapshots, threads, probes.
-
-JProfiler — similar full-stack profiler.
-
-AppDynamics / Dynatrace / New Relic / Datadog APM — production telemetry & heap snapshots / allocation profiling (vary by product).
-
-Container/JFR specific
-
-Cryostat (ContainerJFR) — manage JFR on Kubernetes/containers.
-
-4) Low-overhead/native profilers
-
-async-profiler — gold standard native sampler:
-
-CPU, allocations, locks, wall-clock, memleaks (arena), OS-level stacks.
-
-Produces flame graphs / JFR output.
-
-Honest Profiler — older async sampling.
-
-perf + perf-map-agent (Linux) — system profiler; map Java symbols.
-
-FlameGraph (Brendan Gregg) — render flame graphs from stacks.
-
-5) Heap dump & GC log web analyzers
-
-Eclipse MAT (desktop) — primary choice for dumps.
-
-HeapHero / GCeasy / yCrash / fastThread — upload GC logs/heap dumps; get reports.
-
-HPJMeter / IBM PMAT — older but still seen in enterprise GC analysis ecosystems.
-
-6) Deep agents & bytecode tools (instrument anything)
-
-java.lang.instrument — write agents to measure allocations, sizes, stacks at hotspots.
-
-Byte Buddy — instrumentation with clean API (on top of ASM).
-
-ASM — raw bytecode engineering.
-
-BTrace — dynamic tracing via scripts, prints live data/stacks.
-
-Byteman — rule-based bytecode injection for tracing/testing.
-
-JFR Event Streaming — emit custom events, subscribe to live allocations/latency.
-
-Legacy: HPROF (deprecated), don’t start new work with it.
-
-7) Object sizing & layout (3rd-party)
-
-JOL (OpenJDK) — definitive layout tool.
-
-Jamm — agent for accurate sizeof across object graphs.
-
-Carrotsearch SizeOf (com.carrotsearch.sizeof.RamUsageEstimator) — used in Lucene; estimates retained sizes.
-
-Lucene’s RamUsageEstimator — handy utility if you already depend on Lucene.
-
-8) Native memory / off-heap diagnostics
-
-NMT (see above) — first stop for native memory mysteries.
-
-DirectBuffer accounting — BufferPoolMXBean via JMX.
-
-Panama — when you own off-heap layout; measure precisely.
-
-jemalloc/tdb/malloc hooks — if your distro links JVM to custom allocators (advanced).
-
-GDB/lldb + SA — post-mortem native dumps (hardcore).
-
-9) GC & performance testing harnesses
-
-JMH — microbenchmarks; with -prof gc for allocation rates & GC counts.
-
-JUnit + JFR — scenario tests that record JFR and assert allocation budgets.
-
-Caliper (old), JMH is the modern standard.
-
-10) Remote access & dashboards
-
-JMX remote (SSL/RMI) — wire up VisualVM/JMC remotely.
-
-Jolokia — JMX over HTTP/JSON (great in containers).
-
-Micrometer + Prometheus/Grafana — expose heap, GC, threads, classloading metrics.
-
-11) Alternative JVMs / vendor tools
-
-OpenJ9: jdmpview, IBM Memory Analyzer integrations, extensions to NMT-like reports.
-
-Azul/Zing/Zulu: vendor-specific GC diagnostics (C4), Mission Control integrations.
-
-SAP Machine: generally compatible; often just use JDK tools.
-
-12) IDE-integrated profilers
-
-IntelliJ Profiler — wraps async-profiler/JFR, flame graphs, allocations.
-
-NetBeans Profiler / VisualVM plugin — integrated lightweight profiling.
-
-Eclipse MAT + Eclipse IDE — convenient for dump analysis in the workspace.
-
-13) What to use, when (cheat-sheet)
-
-“What’s in my heap right now?”
-jcmd GC.class_histogram → class sizes; then heap dump → MAT.
-
-“Why am I allocating so much?”
-JFR (alloc events) or async-profiler alloc → flame graph by allocation site.
-
-“What’s leaking?”
-Heap dump → MAT dominator tree & leak suspects.
-
-“Where’s native memory going?”
-Enable NMT → jcmd VM.native_memory summary|detail.
-
-“Thread deadlock/contention?”
-jcmd Thread.print, JFR locks, or async-profiler locks.
-
-“Prod-safe continuous insights?”
-JFR + JMC (low overhead), optionally Micrometer/JMX dashboards.
-
-“I need to instrument a specific class/method live.”
-Byte Buddy agent or BTrace/Byteman rule.
-
-14) Starter command snippets
-# Heap histogram (top 50)
-jcmd $PID GC.class_histogram | head -n 60
-
-# Live heap dump
-jcmd $PID GC.heap_dump /tmp/heap.hprof
-
-# GC/heap quick info
-jcmd $PID GC.heap_info
-
-# Native memory (enable with -XX:NativeMemoryTracking=summary)
-jcmd $PID VM.native_memory summary
-
-# All thread stacks
-jcmd $PID Thread.print > /tmp/threads.txt
-jstack $PID > /tmp/threads.txt
-
-# Start JFR for 2 minutes and dump
-jcmd $PID JFR.start name=diag settings=profile filename=/tmp/run.jfr duration=2m
 
 
 
@@ -813,20 +190,7 @@ jcmd $PID JFR.start name=diag settings=profile filename=/tmp/run.jfr duration=2m
 | sun.misc.Unsafe               | Raw memory ops; non-portable; last resort                        |
 
 
-Panama example:
-```
-import java.lang.foreign.*;
-import java.nio.ByteOrder;
-import static java.lang.foreign.ValueLayout.*;
 
-try (Arena arena = Arena.ofConfined()) {
-  MemorySegment seg = arena.allocate(12);
-  var I32LE = JAVA_INT.withOrder(ByteOrder.LITTLE_ENDIAN);
-  seg.set(I32LE, 0, 0xCAFEBABE);
-  seg.set(I32LE, 4, 42);
-  int v = seg.get(I32LE, 4);
-}
-```
 # Third-Party Power Tools
 
 | Purpose                   | Libraries / Tools                                                            |
@@ -841,98 +205,6 @@ try (Arena arena = Arena.ofConfined()) {
 | Native interop             | JNI (manual), JNA/JNR-FFI (simpler)                                          |
 
 
-Netty example:
-```
-import io.netty.buffer.*;
-ByteBuf buf = PooledByteBufAllocator.DEFAULT.buffer();
-buf.writeIntLE(0x11223344);
-int u8 = buf.readUnsignedByte();
-ByteBuf slice = buf.slice(4, 8); // zero-copy view
-
-Practical Recipes
-
-Pack structured fields (little-endian)
-
-record Header(int magic, short version, short flags) {
-  byte[] toBytes() {
-    var bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
-    bb.putInt(magic).putShort(version).putShort(flags);
-    return bb.array();
-  }
-  static Header from(byte[] b) {
-    var bb = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN);
-    return new Header(bb.getInt(), bb.getShort(), bb.getShort());
-  }
-}
-
-```
-Unsigned reads and multi-byte assembly
-```
-int b0 = bytes[i]   & 0xFF;
-int b1 = bytes[i+1] & 0xFF;
-int u16 = (b1 << 8) | b0; // little-endian
-
-```
-Bitfields in an int
-
-// layout: [unused:8][type:4][flags:4][len:16]
-```
-int pack(int len, int flags, int type) {
-  return ((type & 0xF) << 20) | ((flags & 0xF) << 16) | (len & 0xFFFF);
-}
-int len   = v & 0xFFFF;
-int flags = (v >>> 16) & 0xF;
-int type  = (v >>> 20) & 0xF;
-
-```
-Memory-mapped file patch
-```
-try (var ch = java.nio.file.Files.newByteChannel(path,
-       java.util.Set.of(java.nio.file.StandardOpenOption.READ,
-                        java.nio.file.StandardOpenOption.WRITE))) {
-  var map = ((java.nio.channels.FileChannel) ch)
-            .map(java.nio.channels.FileChannel.MapMode.READ_WRITE, 0, ((java.nio.channels.FileChannel) ch).size())
-            .order(ByteOrder.BIG_ENDIAN);
-  int header = map.getInt(0);
-  map.put(0, (byte)0x7F);
-}
-
-```
-Crypto-style mixing (rotate/xor)
-```
-int mix(int x, int y) {
-  x ^= Integer.rotateLeft(y, 13);
-  y ^= Integer.rotateLeft(x, 7);
-  return x ^ y;
-}
-```
-# JVM Memory & Byte Manipulation Decision Guide
-
-## Decision Guide
-
-| Scenario | Recommended Approach |
-|----------|-----------------------|
-| Simple pack/unpack | `ByteBuffer` + masks/shifts |
-| Huge files / in-place patching | `MappedByteBuffer` |
-| High-throughput I/O and pooling | Netty `ByteBuf` |
-| Low-latency fixed schemas | SBE (Simple Binary Encoding), Agrona |
-| Cross-language APIs | Protobuf / FlatBuffers / Cap’n Proto |
-| Reverse-engineering unknown binary formats | Kaitai Struct, JBBP |
-| Off-heap with explicit layout, no JNI | Project Panama |
-| Max control / hacks | Unsafe (avoid unless necessary) |
-
----
-
-## Pitfalls & Pro Tips
-
-- Always mask when converting byte → int: `b & 0xFF`.
-- Be explicit about endianness.
-- Prefer slices/views over copies (`ByteBuffer.slice()`, `ByteBuf.slice()`).
-- For concurrency, use `VarHandle` acquire/release/opaque modes appropriately.
-- Benchmark with JMH; intuition is unreliable.
-- Avoid home-rolled crypto; use JCA/BouncyCastle.
-
----
 
 ## Heap & Stack Inspection
 
